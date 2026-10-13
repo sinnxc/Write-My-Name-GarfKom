@@ -2,31 +2,27 @@ function main() {
     var canvas = document.getElementById("myCanvas");
     var gl = canvas.getContext("webgl");
 
-    // 12 titik (6 pasang garis) untuk membentuk "A" dan "K"
     var vertices = [
-        // Kaki kiri diagonal A
-        -0.7, -0.6, 0.0,
-        -0.45, 0.6, 0.0,
+        -0.92, -0.60, 0.0,  -0.68, -0.60, 0.0,  -0.55,  0.60, 0.0,
+        -0.92, -0.60, 0.0,  -0.55,  0.60, 0.0,  -0.72,  0.60, 0.0,
 
-        // Kaki kanan diagonal A
-        -0.45, 0.6, 0.0,
-        -0.2, -0.6, 0.0,
+        -0.42, -0.60, 0.0,  -0.18, -0.60, 0.0,  -0.38,  0.60, 0.0,
+        -0.42, -0.60, 0.0,  -0.38,  0.60, 0.0,  -0.55,  0.60, 0.0,
 
-        // Garis horizontal tengah A
-        -0.575, 0.0, 0.0,
-        -0.325, 0.0, 0.0,
+        -0.72,  0.60, 0.0,  -0.38,  0.60, 0.0,  -0.38,  0.44, 0.0,
+        -0.72,  0.60, 0.0,  -0.38,  0.44, 0.0,  -0.72,  0.44, 0.0,
 
-        // Batang vertikal kiri K
-        0.2, -0.6, 0.0,
-        0.2,  0.6, 0.0,
+        -0.76, -0.08, 0.0,  -0.34, -0.08, 0.0,  -0.34, -0.28, 0.0,
+        -0.76, -0.08, 0.0,  -0.34, -0.28, 0.0,  -0.76, -0.28, 0.0,
 
-        // Garis diagonal atas K
-        0.2,  0.0, 0.0,
-        0.7,  0.6, 0.0,
+        0.08, -0.60, 0.0,   0.30, -0.60, 0.0,   0.30,  0.62, 0.0,
+        0.08, -0.60, 0.0,   0.30,  0.62, 0.0,   0.08,  0.62, 0.0,
 
-        // Garis diagonal bawah K
-        0.2,  0.0, 0.0,
-        0.7, -0.6, 0.0
+        0.26, -0.04, 0.0,   0.68,  0.62, 0.0,   0.88,  0.62, 0.0,
+        0.26, -0.04, 0.0,   0.88,  0.62, 0.0,   0.26,  0.18, 0.0,
+
+        0.26,  0.04, 0.0,   0.68, -0.60, 0.0,   0.88, -0.60, 0.0,
+        0.26,  0.04, 0.0,   0.88, -0.60, 0.0,   0.26, -0.18, 0.0
     ];
 
     var positionBuffer = gl.createBuffer();
@@ -35,15 +31,26 @@ function main() {
 
     var vertexShaderCode = `
         attribute vec3 aPosition;
+        varying vec2 vPosition;
         void main(){
+            vPosition = aPosition.xy;
             gl_Position = vec4(aPosition, 1.0);
         }`;
 
     var fragmentShaderCode = `
         precision mediump float;
-        uniform vec4 uColor;
+        varying vec2 vPosition;
         void main(){
-            gl_FragColor = uColor;
+            float tY = clamp((vPosition.y + 0.6) / 1.35, 0.0, 1.0);
+            float tX = clamp((vPosition.x + 0.85) / 1.75, 0.0, 1.0);
+
+            vec3 colorBottom = vec3(1.00, 0.00, 0.00); // Merah
+            vec3 colorTop    = vec3(0.00, 0.00, 1.00); // Biru
+
+            float t = clamp(tY * 0.8 + tX * 0.2, 0.0, 1.0);
+            vec3 finalColor = mix(colorBottom, colorTop, t);
+
+            gl_FragColor = vec4(finalColor, 1.0);
         }`;
 
     var vertexShader = gl.createShader(gl.VERTEX_SHADER);
@@ -64,18 +71,8 @@ function main() {
     gl.enableVertexAttribArray(aPosition);
     gl.vertexAttribPointer(aPosition, 3, gl.FLOAT, false, 0, 0);
 
-    var uColor = gl.getUniformLocation(program, "uColor");
-
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.lineWidth(5.0);
-
-    // Menggambar Huruf "A" (warna biru)
-    gl.uniform4f(uColor, 0.0, 0.0, 1.0, 1.0);
-    gl.drawArrays(gl.LINES, 0, 6);
-
-    // Menggambar Huruf "K" (warna merah)
-    gl.uniform4f(uColor, 1.0, 0.0, 0.0, 1.0);
-    gl.drawArrays(gl.LINES, 6, 6);
+    gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 3);
 }
